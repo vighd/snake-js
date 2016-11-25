@@ -1,6 +1,6 @@
 var key = false;
 var keysDown = [];
-
+var fps = 30;
 
 var game = {
 	canvas: document.createElement("canvas"),
@@ -90,22 +90,19 @@ function play()
 	snakeInit.init();
 	snakeInit.draw();
 	snakeInit.update();
-
-	animate();
 }
 
-function animate()
-{
-	requestAnimationFrame = window.mozRequestAnimationFrame ||
-						window.webkitRequestAnimationFrame ||
-						window.msRequestAnimationFrame ||
-						window.oRequestAnimationFrame;
-	update();
 
-	//rajzolás
+function draw() {
+    setTimeout(function() {
+        requestAnimationFrame(draw);
 
-	requestAnimationFrame(animate);
+        update();
+
+    }, 1000 / fps);
 }
+
+draw();
 
 function update()
 {
@@ -113,6 +110,5 @@ function update()
 	snakeInit.draw();
 	snakeInit.update();
 }
-
 
 play();
