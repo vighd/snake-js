@@ -3,25 +3,21 @@ var keysDown = [];
 var fps = 10;
 var imgLoad = false;
 var bgLoad = false;
-var nyanAnim = [
-	{x: 0, y: 6, w: 42, h:19},
-	{x: 52, y: 6, w: 42, h:19},
-	{x: 104, y: 6, w: 42, h:19},
-	{x: 167, y: 6, w: 45, h:19},
-	{x: 220, y: 6, w: 45, h:19},
-	{x: 272, y: 6, w: 43, h:19},
-	{x: 335, y: 6, w: 43, h:19},
-	{x: 388, y: 6, w: 43, h:19},
-	{x: 439, y: 6, w: 43, h:19},
-];
 var db = 0;
 
-var nyan = new Image();
-nyan.onload = function()
+var bg = new Image();
+bg.onload = function()
+{
+	bgLoad = true;
+}
+bg.src = "images/bg.jpg";
+
+var snakeImg = new Image();
+snakeImg.onload = function()
 {
 	imgLoad = true;
 }
-nyan.src = "images/nyan.png";
+snakeImg.src = "images/snakeImg.png";
 
 var game = {
 	canvas: document.createElement("canvas"),
@@ -44,7 +40,7 @@ var game = {
 	},
 	clear: function(){
 		var ctx = this.canvas.getContext("2d");
-		ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+		ctx.drawImage(bg, 0, 0, this.canvas.width, this.canvas.height);
 	},
 	reset: function() {
 		snakeInit.init();
@@ -74,17 +70,78 @@ var snakeInit = {
 		}
 	},
 	draw: function() {
-		for(var i = 0; i < this.body.length; i++) {
-			var s = this.body[i];
-			var ctx = game.canvas.getContext("2d");
-			ctx.fillStyle = "white";
-			ctx.fillRect(s.x*this.bodySliceSize-1, s.y*this.bodySliceSize-1, this.height+1, this.width+1);
-			ctx.fillStyle = "white";
-			ctx.fillRect(s.x*this.bodySliceSize+1, s.y*this.bodySliceSize+1, this.height, this.width);
-			ctx.fillStyle = "black";
-			ctx.fillRect(s.x*this.bodySliceSize, s.y*this.bodySliceSize, this.height, this.width);
-		}
-	},
+		// Loop over every snake segment
+        for (var i=0; i<this.body.length; i++) {
+            var segment = this.body[i];
+            var segx = segment.x;
+            var segy = segment.y;
+            var tilex = segx*this.width;
+            var tiley = segy*this.height;
+
+            // Sprite column and row that gets calculated
+            var tx = 0;
+            var ty = 0;
+
+            if (i == 0) {
+                // Head; Determine the correct image
+                var nseg = this.body[i+1]; // Next segment
+                if (segy < nseg.y) {
+                    // Up
+                    tx = 3; ty = 0;
+                } else if (segx > nseg.x) {
+                    // Right
+                    tx = 4; ty = 0;
+                } else if (segy > nseg.y) {
+                    // Down
+                    tx = 4; ty = 1;
+                } else if (segx < nseg.x) {
+                    // Left
+                    tx = 3; ty = 1;
+                }
+            } else if (i == this.body.length-1) {
+                // Tail; Determine the correct image
+                var pseg = this.body[i-1]; // Prev segment
+                if (pseg.y < segy) {
+                    tx = 3; ty = 2;
+                } else if (pseg.x > segx) {
+                    // Right
+                    tx = 4; ty = 2;
+                } else if (pseg.y > segy) {
+                    // Down
+                    tx = 4; ty = 3;
+                } else if (pseg.x < segx) {
+                    // Left
+                    tx = 3; ty = 3;
+                }
+            } else {
+                // Body; Determine the correct image
+                var pseg = this.body[i-1]; // Previous segment
+                var nseg = this.body[i+1]; // Next segment
+								if (pseg.x < segx && nseg.x > segx || nseg.x < segx && pseg.x > segx) {
+                    // Horizontal Left-Right
+                    tx = 1; ty = 0;
+                } else if (pseg.x < segx && nseg.y > segy || nseg.x < segx && pseg.y > segy) {
+                    // Angle Left-Down
+                    tx = 2; ty = 0;
+                } else if (pseg.y < segy && nseg.y > segy || nseg.y < segy && pseg.y > segy) {
+                    // Vertical Up-Down
+                    tx = 2; ty = 1;
+                } else if (pseg.y < segy && nseg.x < segx || nseg.y < segy && pseg.x < segx) {
+                    // Angle Top-Left
+                    tx = 2; ty = 2;
+                } else if (pseg.x > segx && nseg.y < segy || nseg.x > segx && pseg.y < segy) {
+                    // Angle Right-Up
+                    tx = 0; ty = 1;
+                } else if (pseg.y > segy && nseg.x > segx || nseg.y > segy && pseg.x > segx) {
+                    // Angle Down-Right
+                    tx = 0; ty = 0;
+                }
+            }
+
+            // Draw the image of the snake part
+						var ctx = game.canvas.getContext("2d");
+            ctx.drawImage(snakeImg, tx*64, ty*64, 64, 64, tilex, tiley, this.width, this.height);	}
+		},
 	genFood: function() {
 		if (this.food) {
 			this.foodX = Math.round(Math.random() * (game.canvas.width - this.bodySliceSize) / this.bodySliceSize);
@@ -92,8 +149,7 @@ var snakeInit = {
 			this.food=false;
 		}
 		var ctx = game.canvas.getContext("2d");
-		ctx.fillStyle = "black";
-		ctx.fillRect(this.foodX*this.bodySliceSize, this.foodY*this.bodySliceSize, 20, 20);
+		ctx.drawImage(snakeImg, 0, 193, 64, 64, this.foodX*this.bodySliceSize, this.foodY*this.bodySliceSize, this.width, this.height);
 	},
 	checkFoodColl: function() {
 		if(this.x == this.foodX && this.y == this.foodY) {
@@ -109,10 +165,9 @@ var snakeInit = {
 			var ctx = game.canvas.getContext("2d");
 			ctx.fillStyle = '#00F';
 			ctx.strokeStyle = '#FFF';
-			ctx.font = (game.canvas.height / 10) + 'px Impact';
+			ctx.font = (game.canvas.height / 15) + 'px Impact';
 			ctx.textAlign = 'center';
 			ctx.fillText(this.message, game.canvas.width/2, game.canvas.height/2);
-			ctx.strokeText(this.message, game.canvas.width/2, game.canvas.height/2);
 		}
 	},
 	drawScore: function() {
@@ -120,10 +175,9 @@ var snakeInit = {
 			var ctx = game.canvas.getContext("2d");
 			ctx.fillStyle = '#00F';
 			ctx.strokeStyle = '#FFF';
-			ctx.font = (game.canvas.height / 20) + 'px Impact';
+			ctx.font = (game.canvas.height / 25) + 'px Impact';
 			ctx.textAlign = 'center';
-			ctx.fillText(this.scoreMsg, 35, 20);
-			ctx.strokeText(this.scoreMsg, 35, 20);
+			ctx.fillText(this.scoreMsg, 45, 20);
 		}
 	},
 	checkMapColl: function() {
