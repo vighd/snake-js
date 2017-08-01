@@ -154,8 +154,8 @@ var snakeInit = {
 	checkFoodColl: function() {
 		if(this.x == this.foodX && this.y == this.foodY) {
 			this.food=true;
-			this.tail = {x: this.x, y:this.y};
-			this.body.unshift(this.tail);
+			this.tail = {x: this.foodX, y:this.foodY};
+			this.body.push(this.tail);
 			this.score++;
 			this.scoreMsg = "Score: " + this.score;
 		}
